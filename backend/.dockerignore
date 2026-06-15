@@ -1,0 +1,13 @@
+target/
+DATA/
+*.mv.db
+*.trace.db
+.env
+.env.*
+!.env.example
+.git
+.gitignore
+.idea
+*.iml
+HELP.md
+README.md
