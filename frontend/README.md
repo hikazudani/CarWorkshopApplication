@@ -1,73 +1,65 @@
-# React + TypeScript + Vite
+# Car Workshop — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Frontend simples em **React + TypeScript (Vite)** para consumir a API do
+backend Spring Boot deste repositório.
 
-Currently, two official plugins are available:
+## Funcionalidades
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Login com JWT (`POST /login`), token guardado em `localStorage`
+- Rotas protegidas (redireciona ao login sem token; logout limpa a sessão)
+- Listagem de consertos ativos (`GET /consertos/relatorios`)
+- Cadastro de conserto (`POST /consertos`)
+- Exclusão lógica de conserto (`DELETE /consertos/{id}`)
 
-## React Compiler
+> Parte do monorepo **Car Workshop** — o backend fica em [`../backend`](../backend).
+> Veja o [README da raiz](../README.md) para a visão geral.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Pré-requisitos
 
-## Expanding the ESLint configuration
+- Node.js 18+
+- Backend rodando em `http://localhost:8080` (`cd ../backend && ./mvnw spring-boot:run`)
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Como executar
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+cd frontend
+cp .env.example .env   # ajuste se necessario
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Acesse `http://localhost:5173`.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Variáveis de ambiente
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Definidas em `.env` (use `.env.example` como base; o `.env` não é versionado).
+Apenas variáveis com prefixo `VITE_` ficam acessíveis ao código.
+
+| Variável             | Padrão                  | Descrição                                                       |
+| -------------------- | ----------------------- | --------------------------------------------------------------- |
+| `VITE_API_BASE_URL`  | _(vazio)_               | Base URL do axios. Vazio = usa o proxy do Vite (dev).           |
+| `VITE_BACKEND_URL`   | `http://localhost:8080` | Alvo do proxy de dev (`/login` e `/consertos` vão para ele).    |
+
+## CORS
+
+O backend **não** expõe configuração de CORS. Em desenvolvimento isso é
+resolvido pelo **proxy do Vite** (ver `vite.config.ts`): o navegador faz
+requisições para a mesma origem (`:5173`) e o Vite as repassa ao backend
+(`:8080`).
+
+Para um **deploy de produção** (frontend e backend em origens diferentes),
+habilite CORS no backend, por exemplo:
+
+```java
+@Bean
+public WebMvcConfigurer corsConfigurer() {
+    return new WebMvcConfigurer() {
+        @Override
+        public void addCorsMappings(CorsRegistry registry) {
+            registry.addMapping("/**")
+                    .allowedOrigins("https://seu-front.exemplo.com")
+                    .allowedMethods("GET", "POST", "PUT", "DELETE");
+        }
+    };
+}
 ```
