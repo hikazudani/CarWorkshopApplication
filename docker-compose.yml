@@ -17,6 +17,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - backnet
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
@@ -39,6 +41,9 @@ services:
       APP_ADMIN_PASSWORD: ${APP_ADMIN_PASSWORD}
     ports:
       - "${BACKEND_PORT:-8080}:8080"
+    networks:
+      - backnet
+      - frontnet
     depends_on:
       db:
         condition: service_healthy
@@ -51,9 +56,18 @@ services:
       dockerfile: Dockerfile.frontend
     ports:
       - "${FRONTEND_PORT:-5173}:80"
+    networks:
+      - frontnet
     depends_on:
       - backend
     restart: unless-stopped
 
 volumes:
   pgdata:
+
+networks:
+  # Rede interna: banco + backend. internal=true -> sem acesso a internet.
+  backnet:
+    internal: true
+  # Rede de borda: backend + frontend (e o que e exposto ao host).
+  frontnet:
