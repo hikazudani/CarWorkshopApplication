@@ -1,0 +1,59 @@
+# Orquestracao dos 3 servicos da aplicacao Car Workshop:
+#   db: PostgreSQL (backend/Dockerfile.database, com volume)
+#   backend: API Spring Boot (backend/Dockerfile.backend)
+#   frontend: SPA React servida por nginx (frontend/Dockerfile.frontend)
+#
+# As variaveis abaixo vem do arquivo .env (use .env.example como base).
+
+services:
+  # Banco de dados PostgreSQL
+  db:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.database
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # Backend (API Spring Boot)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.backend
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/${POSTGRES_DB}
+      DB_USERNAME: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      H2_CONSOLE_ENABLED: "false"
+      JWT_SECRET: ${JWT_SECRET}
+      APP_ADMIN_LOGIN: ${APP_ADMIN_LOGIN}
+      APP_ADMIN_PASSWORD: ${APP_ADMIN_PASSWORD}
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Frontend (React + nginx)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "${FRONTEND_PORT:-5173}:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  pgdata:
